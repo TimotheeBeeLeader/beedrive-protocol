@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USB Serial Communication Protocol Specification for BeeDrive 5.0.1</title>
+    <title>USB Serial Communication Protocol Specification for BeeDrive5.0.1</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -29,38 +29,6 @@
             padding: 0;
         }
 
-        .header-wrapper {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 3px solid var(--secondary-color);
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 1.8rem;
-        }
-
-        /* Language Switcher Styling */
-        .lang-switch-btn {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .lang-switch-btn:hover {
-            background-color: var(--secondary-color);
-        }
-
         .container {
             max-width: 900px;
             margin: 40px auto;
@@ -68,6 +36,13 @@
             padding: 40px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
         }
 
         h2 {
@@ -125,6 +100,31 @@
             margin-bottom: 10px;
         }
 
+        .callout {
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        
+        .callout-warning {
+            background-color: var(--warning-bg);
+            border-left: 4px solid var(--warning-border);
+            color: var(--warning-text);
+        }
+
+        .callout-info {
+            background-color: var(--info-bg);
+            border-left: 4px solid var(--info-border);
+            color: var(--info-text);
+        }
+
+        .callout-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
         ul {
             padding-left: 20px;
         }
@@ -132,251 +132,201 @@
         li {
             margin-bottom: 8px;
         }
-
-        /* Language visibility rules */
-        html[lang="en"] [data-zh] { display: none; }
-        html[lang="zh"] [data-en] { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-wrapper">
-        <div>
-            <h1 data-en="USB Serial Communication Protocol Specification for BeeDrive 5.0.1">USB Serial Communication Protocol Specification for BeeDrive 5.0.1</h1>
-            <h1 data-zh="BeeDrive 5.0.1 USB 串口通信协议规范">BeeDrive 5.0.1 USB 串口通信协议规范</h1>
-        </div>
-        <button class="lang-switch-btn" id="langBtn">中文 / English</button>
-    </div>
-    
-    <p data-en="This document outlines the byte-level interface rules required to communicate with the motor controller hardware over a USB serial connection. Once the device is plugged in, it should appear as a serial peripheral. The Baudrate is 115200.">This document outlines the byte-level interface rules required to communicate with the motor controller hardware over a USB serial connection. Once the device is plugged in, it should appear as a serial peripheral. The Baudrate is 115200.</p>
-    <p data-zh="本文档概述了通过 USB 串口连接与电机控制器硬件进行通信所需的字节级接口规则。设备插入后，应显示为串口外设。波特率为 115200。">本文档概述了通过 USB 串口连接与电机控制器硬件进行通信所需的字节级接口规则。设备插入后，应显示为串口外设。波特率为 115200。</p>
+    <h1>USB Serial Communication Protocol Specification for BeeDrive 5.0.1</h1>
+    <p>This document outlines the byte-level interface rules required to communicate with the motor controller hardware over a USB serial connection. Once the device is plug, it should appear as a serial peripheral. The Baudrate is 115200.</p>
 
-    <h2 data-en="1. Frame Architecture" data-zh="1. 数据帧架构">1. Frame Architecture</h2>
-    <p data-en="All inbound and outbound packets follow a strict framing pattern. Multibyte numeric values (such as 16-bit integers and 32-bit floats) use <strong>Little-Endian</strong> format (least significant byte first)." data-zh="所有输入和输出数据包都遵循严格的帧结构。多字节数值（如 16 位整数和 32 位浮点数）使用 <strong>小端序（Little-Endian）</strong> 格式（低字节在前）。">All inbound and outbound packets follow a strict framing pattern. Multibyte numeric values (such as 16-bit integers and 32-bit floats) use <strong>Little-Endian</strong> format (least significant byte first).</p>
+    <h2>1. Frame Architecture</h2>
+    <p>All inbound and outbound packets follow a strict framing pattern. Multibyte numeric values (such as 16-bit integers and 32-bit floats) use <strong>Little-Endian</strong> format (least significant byte first).</p>
 
     <table>
         <thead>
             <tr>
-                <th data-en="Byte Index" data-zh="字节索引">Byte Index</th>
-                <th data-en="Field Name" data-zh="字段名称">Field Name</th>
-                <th data-en="Data Type" data-zh="数据类型">Data Type</th>
-                <th data-en="Value / Description" data-zh="取值 / 描述">Value / Description</th>
+                <th>Byte Index</th>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Value / Description</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><code>0</code></td>
-                <td data-en="Start Byte" data-zh="起始字节"><strong>Start Byte</strong></td>
+                <td><strong>Start Byte</strong></td>
                 <td><code>uint8</code></td>
-                <td data-en="Always 0x02" data-zh="固定为 0x02">Always <code>0x02</code></td>
+                <td>Always <code>0x02</code></td>
             </tr>
             <tr>
                 <td><code>1</code></td>
-                <td data-en="Command ID" data-zh="命令 ID"><strong>Command ID</strong></td>
+                <td><strong>Command ID</strong></td>
                 <td><code>uint8</code></td>
-                <td data-en="Identifies the packet payload rule (see Registry)" data-zh="识别数据包负载规则（见下表）">Identifies the packet payload rule (see Registry)</td>
+                <td>Identifies the packet payload rule (see Registry)</td>
             </tr>
             <tr>
                 <td><code>2</code> to <code>N-3</code></td>
-                <td data-en="Payload" data-zh="数据负载"><strong>Payload</strong></td>
+                <td><strong>Payload</strong></td>
                 <td><em>Variable</em></td>
-                <td data-en="Data parameters belonging to the specific Command ID" data-zh="属于特定命令 ID 的数据参数">Data parameters belonging to the specific Command ID</td>
+                <td>Data parameters belonging to the specific Command ID</td>
             </tr>
             <tr>
                 <td><code>N-2</code></td>
-                <td data-en="Checksum" data-zh="校验和"><strong>Checksum</strong></td>
+                <td><strong>Checksum</strong></td>
                 <td><code>uint8</code></td>
-                <td data-en="8-bit XOR validation check" data-zh="8 位异或（XOR）验证码">8-bit XOR validation check</td>
+                <td>8-bit XOR validation check</td>
             </tr>
             <tr>
                 <td><code>N-1</code></td>
-                <td data-en="End Byte" data-zh="结束字节"><strong>End Byte</strong></td>
+                <td><strong>End Byte</strong></td>
                 <td><code>uint8</code></td>
-                <td data-en="Always 0x03" data-zh="固定为 0x03">Always <code>0x03</code></td>
+                <td>Always <code>0x03</code></td>
             </tr>
         </tbody>
     </table>
 
-    <h3 data-en="Checksum Logic" data-zh="校验和逻辑">Checksum Logic</h3>
-    <p data-en="The checksum is compiled by running an XOR (^) calculation across all sequential bytes starting immediately after the Start Byte up to, but excluding, the Checksum byte itself." data-zh="校验和是通过对从 <strong>起始字节之后</strong> 开始到 <strong>校验和字节之前</strong> 的所有连续字节进行异或（XOR，^）计算得出的。">The checksum is compiled by running an XOR (<code>^</code>) calculation across all sequential bytes starting immediately after the Start Byte up to, but excluding, the Checksum byte itself.</p>
+    <h3>Checksum Logic</h3>
+    <p>The checksum is compiled by running an XOR (<code>^</code>) calculation across all sequential bytes starting immediately <em>after</em> the <code>Start Byte</code> up to, but excluding, the <code>Checksum</code> byte itself.</p>
 
-    <h2 data-en="2. Outbound Frame Profiles (Control panel &rarr; Device)" data-zh="2. 输出数据帧配置（控制面板 &rarr; 设备）">2. Outbound Frame Profiles (Control panel &rarr; Device)</h2>
-    <p data-en="Ensure byte arrays exactly match the targeted sizes. Out-of-bounds parameters will automatically be clamped internally by the motor firmware." data-zh="请确保字节数组的大小与指定尺寸完全一致。超出范围的参数将在电机固件内部被自动限制在安全范围内。">Ensure byte arrays exactly match the targeted sizes. Out-of-bounds parameters will automatically be clamped internally by the motor firmware.</p>
+    <h2>2. Outbound Frame Profiles (Control panel &rarr; Device)</h2>
+    <p>Ensure byte arrays exactly match the targeted sizes. Out-of-bounds parameters will automatically be clamped internally by the motor firmware.</p>
 
-    <h3><span data-en="2.1 Base Resistance" data-zh="2.1 基础阻力">2.1 Base Resistance</span> (<code>Command ID: 0x00</code>)</h3>
-    <div class="packet-size"><span data-en="Total Frame Size: 9 Bytes" data-zh="数据帧总大小: 9 字节">Total Frame Size: 9 Bytes</span></div>
+    <h3>2.1 Base Resistance (<code>Command ID: 0x00</code>)</h3>
+    <div class="packet-size">Total Frame Size: 9 Bytes</div>
     <ul>
-        <li data-en="Bytes 2–3: int16 | Concentric Force limit (in decinewtons, 0.1N). Must be &ge; 0 & &le; 8000."><strong>Bytes 2–3:</strong> <code>int16</code> | Concentric Force limit (in decinewtons, 0.1N). Must be &ge; 0 & &le; 8000.</li>
-        <li data-zh="Bytes 2–3: int16 | 向心力限制（单位：角牛顿，0.1N）。必须 &ge; 0 且 &le; 8000。"><strong>Bytes 2–3:</strong> <code>int16</code> | 向心力限制（单位：角牛顿，0.1N）。必须 &ge; 0 且 &le; 8000。</li>
-        
-        <li data-en="Bytes 4–5: int16 | Eccentric Force limit (in decinewtons, 0.1N). Must be &ge; 0 & &le; 8000."><strong>Bytes 4–5:</strong> <code>int16</code> | Eccentric Force limit (in decinewtons, 0.1N). Must be &ge; 0 & &le; 8000.</li>
-        <li data-zh="Bytes 4–5: int16 | 离心力限制（单位：角牛顿，0.1N）。必须 &ge; 0 且 &le; 8000。"><strong>Bytes 4–5:</strong> <code>int16</code> | 离心力限制（单位：角牛顿，0.1N）。必须 &ge; 0 且 &le; 8000。</li>
-        
-        <li data-en="Byte 6: uint8 | SSR Flag. Set to 0xFF for True, 0x00 for False."><strong>Byte 6:</strong> <code>uint8</code> | SSR Flag. Set to <code>0xFF</code> for True, <code>0x00</code> for False.</li>
-        <li data-zh="Byte 6: uint8 | SSR 标志。0xFF 表示开启，0x00 表示关闭。"><strong>Byte 6:</strong> <code>uint8</code> | SSR 标志。0xFF 表示开启，0x00 表示关闭。</li>
+        <li><strong>Bytes 2–3:</strong> <code>int16</code> | Concentric Force limit (in decinewtons, 0.1N). Must be &ge; 0 & &le; 8000.</li>
+        <li><strong>Bytes 4–5:</strong> <code>int16</code> | Eccentric Force limit (in decinewtons, 0.1N). Must be &ge; 0 & &le; 8000.</li>
+        <li><strong>Byte 6:</strong> <code>uint8</code> | SSR Flag. Set to <code>0xFF</code> for True, <code>0x00</code> for False.</li>
     </ul>
 
-    <h3><span data-en="2.2 Spring Simulation" data-zh="2.2 弹簧模拟">2.2 Spring Simulation</span> (<code>Command ID: 0x01</code>)</h3>
-    <div class="packet-size"><span data-en="Total Frame Size: 8 Bytes" data-zh="数据帧总大小: 8 字节">Total Frame Size: 8 Bytes</span></div>
+    <h3>2.2 Spring Simulation (<code>Command ID: 0x01</code>)</h3>
+    <div class="packet-size">Total Frame Size: 8 Bytes</div>
     <ul>
-        <li data-en="Bytes 2–3: int16 | Target extension spring path length (in mm). Must be &ge; 0. If the length is too small, the feeling will be very bad."><strong>Bytes 2–3:</strong> <code>int16</code> | Target extension spring path length (in mm). Must be &ge; 0. If the length is too small, the feeling will be very bad.</li>
-        <li data-zh="Bytes 2–3: int16 | 目标弹簧拉伸行程长度（单位：mm）。必须 &ge; 0。如果长度设定太小，力感体验会非常差。"><strong>Bytes 2–3:</strong> <code>int16</code> | 目标弹簧拉伸行程长度（单位：mm）。必须 &ge; 0。如果长度设定太小，力感体验会非常差。</li>
-        
-        <li data-en="Bytes 4–5: int16 | Max peak force generated at full extension (in 0.1N). Must be &ge; 0 & &le; 8000."><strong>Bytes 4–5:</strong> <code>int16</code> | Max peak force generated at full extension (in 0.1N). Must be &ge; 0 & &le; 8000.</li>
-        <li data-zh="Bytes 4–5: int16 | 完全拉伸时产生的最大峰值力（单位：0.1N）。必须 &ge; 0 且 &le; 8000。"><strong>Bytes 4–5:</strong> <code>int16</code> | 完全拉伸时产生的最大峰值力（单位：0.1N）。必须 &ge; 0 且 &le; 8000。</li>
+        <li><strong>Bytes 2–3:</strong> <code>int16</code> | Target extension spring path length (in mm). Must be &ge; 0. If the length is too small, the feeling will be very bad.</li>
+        <li><strong>Bytes 4–5:</strong> <code>int16</code> | Max peak force generated at full extension (in 0.1N). Must be &ge; 0 & &le; 8000.</li>
     </ul>
 
-    <h3><span data-en="2.3 Progressive Resistance Band" data-zh="2.3 渐进式阻力带模拟">2.3 Progressive Resistance Band</span> (<code>Command ID: 0x14</code>)</h3>
-    <div class="packet-size"><span data-en="Total Frame Size: 11 Bytes" data-zh="数据帧总大小: 11 字节">Total Frame Size: 11 Bytes</span></div>
+    <h3>2.3 Progressive Resistance Band (<code>Command ID: 0x14</code>)</h3>
+    <div class="packet-size">Total Frame Size: 11 Bytes</div>
     <ul>
-        <li data-en="Bytes 2–3: int16 | Slack / Rest physical length of the band (in mm). Must be &ge; 0."><strong>Bytes 2–3:</strong> <code>int16</code> | Slack / Rest physical length of the band (in mm). Must be &ge; 0.</li>
-        <li data-zh="Bytes 2–3: int16 | 阻力带的初始松弛/静止物理长度（单位：mm）。必须 &ge; 0。"><strong>Bytes 2–3:</strong> <code>int16</code> | 阻力带的初始松弛/静止物理长度（单位：mm）。必须 &ge; 0。</li>
-        
-        <li data-en="Bytes 4–5: int16 | Maximum safe extension length boundary (in mm). Must be &ge; Rest length."><strong>Bytes 4–5:</strong> <code>int16</code> | Maximum safe extension length boundary (in mm). Must be &ge; Rest length.</li>
-        <li data-zh="Bytes 4–5: int16 | 最大安全拉伸长度边界（单位：mm）。必须 &ge; 静止长度。"><strong>Bytes 4–5:</strong> <code>int16</code> | 最大安全拉伸长度边界（单位：mm）。必须 &ge; 静止长度。</li>
-        
-        <li data-en="Bytes 6–7: int16 | Max structural peak force at full extension (in 0.1N). Must be &ge; 0 & &le; 8000."><strong>Bytes 6–7:</strong> <code>int16</code> | Max structural peak force at full extension (in 0.1N). Must be &ge; 0 & &le; 8000.</li>
-        <li data-zh="Bytes 6–7: int16 | 完全拉伸时的最大结构峰值力（单位：0.1N）。必须 &ge; 0 且 &le; 8000。"><strong>Bytes 6–7:</strong> <code>int16</code> | 完全拉伸时的最大结构峰值力（单位：0.1N）。必须 &ge; 0 且 &le; 8000。</li>
-        
-        <li data-en="Byte 8: uint8 | Curve non-linearity factor coefficient. Valid values: 0 to 4."><strong>Byte 8:</strong> <code>uint8</code> | Curve non-linearity factor coefficient. Valid values: <code>0</code> to <code>4</code>.</li>
-        <li data-zh="Byte 8: uint8 | 曲线非线性系数。有效取值范围：0 到 4。"><strong>Byte 8:</strong> <code>uint8</code> | 曲线非线性系数。有效取值范围：0 到 4。</li>
+        <li><strong>Bytes 2–3:</strong> <code>int16</code> | Slack / Rest physical length of the band (in mm). Must be &ge; 0.</li>
+        <li><strong>Bytes 4–5:</strong> <code>int16</code> | Maximum safe extension length boundary (in mm). Must be &ge; Rest length.</li>
+        <li><strong>Bytes 6–7:</strong> <code>int16</code> | Max structural peak force at full extension (in 0.1N). Must be &ge; 0 & &le; 8000.</li>
+        <li><strong>Byte 8:</strong> <code>uint8</code> | Curve non-linearity factor coefficient. Valid values: <code>0</code> to <code>4</code>.</li>
     </ul>
 
-    <h3><span data-en="2.4 Isokinetic Limit" data-zh="2.4 等速限制">2.4 Isokinetic Limit</span> (<code>Command ID: 0x11</code>)</h3>
-    <div class="packet-size"><span data-en="Total Frame Size: 8 Bytes" data-zh="数据帧总大小: 8 字节">Total Frame Size: 8 Bytes</span></div>
+    <h3>2.4 Isokinetic Limit (<code>Command ID: 0x11</code>)</h3>
+    <div class="packet-size">Total Frame Size: 8 Bytes</div>
     <ul>
-        <li data-en="Bytes 2–3: int16 | Velocity target (in mm/s). Must be &ge; 0. The force will start increasing after this speed, following a slope defined by the parameter 'Slope'."><strong>Bytes 2–3:</strong> <code>int16</code> | Velocity target (in mm/s). Must be &ge; 0. The force will start increasing after this speed, following a slope defined by the parameter "Slope".</li>
-        <li data-zh="Bytes 2–3: int16 | 目标速度（单位：mm/s）。必须 &ge; 0。超过此速度后阻力将开始增加，增加规律遵循由“Slope”参数定义的斜率。"><strong>Bytes 2–3:</strong> <code>int16</code> | 目标速度（单位：mm/s）。必须 &ge; 0。超过此速度后阻力将开始增加，增加规律遵循由“Slope”参数定义的斜率。</li>
-        
-        <li data-en="Bytes 4–5: int16 | Slope parameter (in 0.1N/(m/s)). Must be &ge; 0 & &le; 4000."><strong>Bytes 4–5:</strong> <code>int16</code> | Slope parameter (in 0.1N/(m/s)). Must be &ge; 0 & &le; 4000.</li>
-        <li data-zh="Bytes 4–5: int16 | 斜率参数（单位：0.1N/(m/s)）。必须 &ge; 0 且 &le; 4000。"><strong>Bytes 4–5:</strong> <code>int16</code> | 斜率参数（单位：0.1N/(m/s)）。必须 &ge; 0 且 &le; 4000。</li>
+        <li><strong>Bytes 2–3:</strong> <code>int16</code> | Velocity target (in mm/s). Must be &ge; 0. The force will start increasing after this speed, following a slope defined by the parameter "Slope".</li>
+        <li><strong>Bytes 4–5:</strong> <code>int16</code> | Slope parameter (in 0.1N/(m/s)). Must be &ge; 0  & &le; 4000.</li>
     </ul>
 
-    <h3><span data-en="2.5 Vibrations" data-zh="2.5 震动配置">2.5 Vibrations</span> (<code>Command ID: 0x04</code>)</h3>
-    <div class="packet-size"><span data-en="Total Frame Size: 8 Bytes" data-zh="数据帧总大小: 8 字节">Total Frame Size: 8 Bytes</span></div>
+    <h3>2.5 Vibrations (<code>Command ID: 0x04</code>)</h3>
+    <div class="packet-size">Total Frame Size: 8 Bytes</div>
     <ul>
-        <li data-en="Bytes 2–3: int16 | Vibration force amplitude factor (in 0.1N)."><strong>Bytes 2–3:</strong> <code>int16</code> | Vibration force amplitude factor (in 0.1N).</li>
-        <li data-zh="Bytes 2–3: int16 | 震动力幅值参数（单位：0.1N）。"><strong>Bytes 2–3:</strong> <code>int16</code> | 震动力幅值参数（单位：0.1N）。</li>
-        
-        <li data-en="Bytes 4–5: int16 | Targeted mechanical cycling frequency (in Hz)."><strong>Bytes 4–5:</strong> <code>int16</code> | Targeted mechanical cycling frequency (in Hz).</li>
-        <li data-zh="Bytes 4–5: int16 | 目标机械循环频率（单位：Hz）。"><strong>Bytes 4–5:</strong> <code>int16</code> | 目标机械循环频率（单位：Hz）。</li>
+        <li><strong>Bytes 2–3:</strong> <code>int16</code> | Vibration force amplitude factor (in 0.1N).</li>
+        <li><strong>Bytes 4–5:</strong> <code>int16</code> | Targeted mechanical cycling frequency (in Hz).</li>
     </ul>
 
-    <h3><span data-en="2.6 System Breakout Inertia" data-zh="2.6 系统启动惯性阻力">2.6 System Breakout Inertia</span> (<code>Command ID: 0x15</code>)</h3>
-    <div class="packet-size"><span data-en="Total Frame Size: 6 Bytes" data-zh="数据帧总大小: 6 字节">Total Frame Size: 6 Bytes</span></div>
+    <h3>2.6 System Breakout Inertia (<code>Command ID: 0x15</code>)</h3>
+    <div class="packet-size">Total Frame Size: 6 Bytes</div>
     <ul>
-        <li data-en="Bytes 2–3: int16 | Starting static breakthrough force resistance limit (in 0.1N). Must be &ge; 0 & &le; 8000."><strong>Bytes 2–3:</strong> <code>int16</code> | Starting static breakthrough force resistance limit (in 0.1N). Must be &ge; 0 & &le; 8000.</li>
-        <li data-zh="Bytes 2–3: int16 | 初始静态突破力阻力限制（单位：0.1N）。必须 &ge; 0 且 &le; 8000。"><strong>Bytes 2–3:</strong> <code>int16</code> | 初始静态突破力阻力限制（单位：0.1N）。必须 &ge; 0 且 &le; 8000。</li>
+        <li><strong>Bytes 2–3:</strong> <code>int16</code> | Starting static breakthrough force resistance limit (in 0.1N). Must be &ge; 0 & &le; 8000.</li>
     </ul>
 
-    <h3><span data-en="2.7 Telemetry Stream Request" data-zh="2.7 遥测数据流请求">2.7 Telemetry Stream Request</span> (<code>Command ID: 0x0E</code>)</h3>
-    <div class="packet-size"><span data-en="Total Frame Size: 4 Bytes" data-zh="数据帧总大小: 4 字节">Total Frame Size: 4 Bytes</span></div>
-    <p data-en="Polling payload to command an immediate backplane telemetry message refresh." data-zh="用于触发下位机立即回复当前传感器遥测数据的轮询指令包。">Polling payload to command an immediate backplane telemetry message refresh.</p>
-    <p><strong data-en="Fixed Byte Array String:" data-zh="固定字节数组字符串:">Fixed Byte Array String:</strong> <code>[0x02, 0x0E, 0x0E, 0x03]</code></p>
+    <h3>2.7 Telemetry Stream Request (<code>Command ID: 0x0E</code>)</h3>
+    <div class="packet-size">Total Frame Size: 4 Bytes</div>
+    <p>Polling payload to command an immediate backplane telemetry message refresh.</p>
+    <p><strong>Fixed Byte Array String:</strong> <code>[0x02, 0x0E, 0x0E, 0x03]</code></p>
 
-    <h2 data-en="3. Inbound Telemetry Packet (Device &rarr; Android)" data-zh="3. 输入遥测数据包（设备 &rarr; Android）">3. Inbound Telemetry Packet (Device &rarr; Android)</h2>
-    <p data-en="Upon verifying a polling request, the device returns a fixed <strong>25-byte</strong> binary status frame mapping the internal sensor matrices." data-zh="验证轮询请求后，设备会立即返回一个固定的 <strong>25字节</strong> 二进制状态帧，映射内部传感器数据矩阵。">Upon verifying a polling request, the device returns a fixed <strong>25-byte</strong> binary status frame mapping the internal sensor matrices.</p>
+    <h2>3. Inbound Telemetry Packet (Device &rarr; Android)</h2>
+    <p>Upon verifying a polling request, the device returns a fixed <strong>25-byte</strong> binary status frame mapping the internal sensor matrices.</p>
 
     <table>
         <thead>
             <tr>
-                <th data-en="Byte Index" data-zh="字节索引">Byte Index</th>
-                <th data-en="Field Name" data-zh="字段名称">Field Name</th>
-                <th data-en="Data Type" data-zh="数据类型">Data Type</th>
-                <th data-en="Unit / Interpretation Description" data-zh="单位 / 解析说明描述">Unit / Interpretation Description</th>
+                <th>Byte Index</th>
+                <th>Field Name</th>
+                <th>Data Type</th>
+                <th>Unit / Interpretation Description</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><code>0</code></td>
-                <td data-en="Start Byte" data-zh="起始字节"><strong>Start Byte</strong></td>
+                <td><strong>Start Byte</strong></td>
                 <td><code>uint8</code></td>
                 <td><code>0x02</code></td>
             </tr>
             <tr>
                 <td><code>1</code></td>
-                <td data-en="Command ID" data-zh="命令 ID"><strong>Command ID</strong></td>
+                <td><strong>Command ID</strong></td>
                 <td><code>uint8</code></td>
-                <td><code>0x0E</code> <span data-en="(Validation matching)" data-zh="（用于验证匹配）">(Validation matching)</span></td>
+                <td><code>0x0E</code> (Validation matching)</td>
             </tr>
             <tr>
                 <td><code>2</code></td>
-                <td data-en="System State" data-zh="系统状态"><strong>System State</strong></td>
+                <td><strong>System State</strong></td>
                 <td><code>uint8</code></td>
-                <td data-en="Current structural active state machine index status" data-zh="当前系统活动状态机的索引状态">Current structural active state machine index status</td>
+                <td>Current structural active state machine index status</td>
             </tr>
             <tr>
                 <td><code>3–6</code></td>
-                <td data-en="Real Position" data-zh="实际位置"><strong>Real Position</strong></td>
+                <td><strong>Real Position</strong></td>
                 <td><code>int32</code></td>
-                <td data-en="Current linear rope/draw coordinate extension (in mm)" data-zh="当前拉绳线性拉伸坐标（单位：mm）">Current linear rope/draw coordinate extension (in mm)</td>
+                <td>Current linear rope/draw coordinate extension (in mm)</td>
             </tr>
             <tr>
                 <td><code>7–8</code></td>
-                <td data-en="Current Speed" data-zh="当前速度"><strong>Current Speed</strong></td>
+                <td><strong>Current Speed</strong></td>
                 <td><code>int16</code></td>
-                <td data-en="Real-time travel velocity metrics (in mm/s)" data-zh="实时运行速度指标（单位：mm/s）">Real-time travel velocity metrics (in mm/s)</td>
+                <td>Real-time travel velocity metrics (in mm/s)</td>
             </tr>
             <tr>
                 <td><code>9–10</code></td>
-                <td data-en="Total Force" data-zh="总出力"><strong>Total Force</strong></td>
+                <td><strong>Total Force</strong></td>
                 <td><code>int16</code></td>
-                <td data-en="Instantaneous compound force calculations (in 0.1N)" data-zh="瞬时复合出力计算值（单位：0.1N）">Instantaneous compound force calculations (in 0.1N)</td>
+                <td>Instantaneous compound force calculations (in 0.1N)</td>
             </tr>
             <tr>
                 <td><code>11–12</code></td>
-                <td data-en="FET Temperature" data-zh="FET 温度"><strong>FET Temperature</strong></td>
+                <td><strong>FET Temperature</strong></td>
                 <td><code>int16</code></td>
-                <td data-en="Power semiconductor power-stage switch array thermals" data-zh="功率半导体驱动桥开关管阵列温度">Power semiconductor power-stage switch array thermals</td>
+                <td>Power semiconductor power-stage switch array thermals</td>
             </tr>
             <tr>
                 <td><code>13–14</code></td>
-                <td data-en="Motor Temperature" data-zh="电机温度"><strong>Motor Temperature</strong></td>
+                <td><strong>Motor Temperature</strong></td>
                 <td><code>int16</code></td>
-                <td data-en="Internal core motor winding inductive thermal sensor" data-zh="电机内部绕组核心感应热敏传感器温度">Internal core motor winding inductive thermal sensor</td>
+                <td>Internal core motor winding inductive thermal sensor</td>
             </tr>
             <tr>
                 <td><code>15–16</code></td>
-                <td data-en="Brake Temperature" data-zh="刹车电阻温度"><strong>Brake Temperature</strong></td>
+                <td><strong>Brake Temperature</strong></td>
                 <td><code>int16</code></td>
-                <td data-en="Dynamic braking chopper power resistor thermal sensor" data-zh="能耗制动斩波功率电阻热敏传感器温度">Dynamic braking chopper power resistor thermal sensor</td>
+                <td>Dynamic braking chopper power resistor thermal sensor</td>
             </tr>
             <tr>
                 <td><code>17–18</code></td>
-                <td data-en="Bus Voltage" data-zh="母线电压"><strong>Bus Voltage</strong></td>
+                <td><strong>Bus Voltage</strong></td>
                 <td><code>int16</code></td>
-                <td data-en="DC Main power rail input distribution line voltage" data-zh="直流主供电母线输入分配电压">DC Main power rail input distribution line voltage</td>
+                <td>DC Main power rail input distribution line voltage</td>
             </tr>
             <tr>
                 <td><code>19</code></td>
-                <td data-en="Checksum" data-zh="校验和"><strong>Checksum</strong></td>
+                <td><strong>Checksum</strong></td>
                 <td><code>uint8</code></td>
-                <td data-en="Inbound response packet validator token" data-zh="输入响应数据包验证令牌">Inbound response packet validator token</td>
+                <td>Inbound response packet validator token</td>
             </tr>
             <tr>
                 <td><code>20</code></td>
-                <td data-en="End Byte" data-zh="结束字节"><strong>End Byte</strong></td>
+                <td><strong>End Byte</strong></td>
                 <td><code>uint8</code></td>
                 <td><code>0x03</code></td>
             </tr>
         </tbody>
     </table>
-</div>
-
-<script>
-    const langBtn = document.getElementById('langBtn');
-    const htmlDoc = document.documentElement;
-
-    // Toggle language attribute on click
-    langBtn.addEventListener('click', () => {
-        if (htmlDoc.getAttribute('lang') === 'en') {
-            htmlDoc.setAttribute('lang', 'zh');
-        } else {
-            htmlDoc.setAttribute('lang', 'en');
-        }
-    });
-</script>
-
 </body>
 </html>
