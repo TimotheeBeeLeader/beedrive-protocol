@@ -1,487 +1,691 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USB Serial Communication Protocol Specification for BeeDrive 5.0.1</title>
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --background-color: #f8f9fa;
-            --text-color: #333333;
-            --border-color: #e2e8f0;
-            --code-bg: #f1f5f9;
-            --warning-bg: #fff3cd;
-            --warning-border: #ffeba2;
-            --warning-text: #664d03;
-            --info-bg: #e1f5fe;
-            --info-border: #b3e5fc;
-            --info-text: #0288d1;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USB Serial Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f7f9;
+    --panel:#ffffff;
+    --ink:#141a26;
+    --muted:#5a6577;
+    --line:#e3e7ee;
+    --line-soft:#eef1f6;
+    --accent:#1e5dff;
+    --accent-weak:#eaf0ff;
+    --start:#e8590c;   /* START / END */
+    --cmd:#7048e8;     /* command byte */
+    --pay:#1e5dff;     /* payload */
+    --chk:#0ca678;     /* checksum */
+    --host:#1e5dff;
+    --device:#0ca678;
+    --warn:#c0392b;
+    --radius:14px;
+    --mono:'IBM Plex Mono','Noto Sans SC',monospace;
+    --sans:'IBM Plex Sans','Noto Sans SC',system-ui,sans-serif;
+    --display:'Space Grotesk','Noto Sans SC',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  body.lang-zh{line-height:1.75}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--background-color);
-            margin: 0;
-            padding: 0;
-        }
+  /* ---------- Top bar ---------- */
+  header.bar{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;padding:14px 22px;
+    background:rgba(246,247,249,.85);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;flex-direction:column;line-height:1.15}
+  .brand .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;
+  }
+  .brand .name{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.01em}
+  .lang-toggle{
+    font-family:var(--mono);font-weight:600;font-size:13px;
+    display:inline-flex;align-items:center;gap:8px;
+    padding:9px 15px;border:1px solid var(--line);border-radius:999px;
+    background:var(--panel);color:var(--ink);cursor:pointer;
+    transition:border-color .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  .lang-toggle:hover{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-weak)}
+  .lang-toggle:active{transform:translateY(1px)}
+  .lang-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .lang-toggle .globe{width:15px;height:15px;opacity:.75}
 
-        .header-wrapper {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 3px solid var(--secondary-color);
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
+  /* ---------- Layout ---------- */
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  main{display:grid;grid-template-columns:210px 1fr;gap:40px;max-width:1180px;margin:0 auto;padding:0 22px}
+  nav.toc{
+    position:sticky;top:86px;align-self:start;height:max-content;
+    font-size:13.5px;padding-top:36px;
+  }
+  nav.toc .toc-label{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 12px 2px;
+  }
+  nav.toc a{
+    display:block;padding:6px 10px;margin:1px 0;border-radius:8px;
+    color:var(--muted);text-decoration:none;border-left:2px solid transparent;
+    transition:background .12s,color .12s;
+  }
+  nav.toc a:hover{background:var(--line-soft);color:var(--ink)}
+  nav.toc a.active{color:var(--accent);background:var(--accent-weak);border-left-color:var(--accent);font-weight:600}
+  .content{min-width:0;padding-bottom:80px}
 
-        h1 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 1.8rem;
-        }
+  /* ---------- Hero ---------- */
+  .hero{padding:52px 0 30px}
+  .hero h1{
+    font-family:var(--display);font-weight:700;font-size:clamp(30px,5vw,46px);
+    line-height:1.05;letter-spacing:-.02em;margin:14px 0 16px;
+  }
+  .hero .kicker{
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;
+  }
+  .hero p.lede{font-size:17px;color:var(--muted);max-width:64ch;margin:0}
+  .facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .fact{
+    font-family:var(--mono);font-size:12.5px;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:9px 13px;
+    display:flex;gap:8px;align-items:baseline;
+  }
+  .fact b{color:var(--ink);font-weight:600}
+  .fact span{color:var(--muted)}
 
-        /* Language Switcher Styling */
-        .lang-switch-btn {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
+  /* ---------- Sections ---------- */
+  section{padding-top:48px;scroll-margin-top:80px}
+  section h2{
+    font-family:var(--display);font-weight:600;font-size:24px;letter-spacing:-.01em;
+    margin:0 0 6px;display:flex;align-items:center;gap:12px;
+  }
+  section h2 .num{
+    font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent);
+    background:var(--accent-weak);border-radius:7px;padding:3px 9px;
+  }
+  section .sub{color:var(--muted);margin:0 0 22px;max-width:70ch}
+  section h3{font-family:var(--display);font-weight:600;font-size:16px;margin:30px 0 10px}
+  p{margin:0 0 14px}
 
-        .lang-switch-btn:hover {
-            background-color: var(--secondary-color);
-        }
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;margin:16px 0;
+  }
 
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            background: #ffffff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
+  /* ---------- Byte strip diagram ---------- */
+  .strip{display:flex;flex-wrap:wrap;gap:5px;align-items:stretch;margin:6px 0}
+  .seg{
+    border-radius:9px;padding:9px 11px;min-width:56px;text-align:center;
+    border:1.5px solid;background:var(--panel);
+    display:flex;flex-direction:column;gap:3px;justify-content:center;
+  }
+  .seg .lab{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.02em}
+  .seg .sz{font-size:10px;color:var(--muted);font-family:var(--mono)}
+  .seg.start,.seg.end{border-color:var(--start);background:#fff5ef}
+  .seg.start .lab,.seg.end .lab{color:var(--start)}
+  .seg.cmd{border-color:var(--cmd);background:#f4f1fe}
+  .seg.cmd .lab{color:var(--cmd)}
+  .seg.pay{border-color:var(--pay);background:#eef3ff;flex:1;min-width:120px}
+  .seg.pay .lab{color:var(--pay)}
+  .seg.field{border-color:var(--pay);background:#eef3ff}
+  .seg.field .lab{color:var(--pay)}
+  .seg.chk{border-color:var(--chk);background:#e9f8f2}
+  .seg.chk .lab{color:var(--chk)}
 
-        h2 {
-            color: var(--primary-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-            margin-top: 30px;
-        }
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono)}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block;border:1.5px solid}
+  .dot.start{border-color:var(--start);background:#fff5ef}
+  .dot.cmd{border-color:var(--cmd);background:#f4f1fe}
+  .dot.pay{border-color:var(--pay);background:#eef3ff}
+  .dot.chk{border-color:var(--chk);background:#e9f8f2}
 
-        h3 {
-            color: var(--secondary-color);
-            margin-top: 20px;
-        }
+  /* ---------- Tables ---------- */
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:4px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  th{
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);
+  }
+  td.mono,.mono{font-family:var(--mono)}
+  td.off{color:var(--muted);font-family:var(--mono);width:52px}
+  td.ty{font-family:var(--mono);color:var(--cmd);white-space:nowrap}
+  tr:last-child td{border-bottom:none}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 0.95rem;
-        }
+  /* ---------- Command cards ---------- */
+  .cmd-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;margin:14px 0;
+  }
+  .cmd-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:4px}
+  .cmd-head .cname{font-family:var(--mono);font-weight:600;font-size:15px}
+  .badge{
+    font-family:var(--mono);font-size:11.5px;font-weight:600;
+    padding:2px 8px;border-radius:6px;white-space:nowrap;
+  }
+  .badge.hex{background:#f4f1fe;color:var(--cmd)}
+  .badge.size{background:var(--line-soft);color:var(--muted)}
+  .badge.dir-host{background:#eef3ff;color:var(--host)}
+  .badge.dir-device{background:#e9f8f2;color:var(--device)}
+  .cmd-desc{color:var(--muted);font-size:13.5px;margin:4px 0 12px}
+  .nopayload{font-family:var(--mono);font-size:12.5px;color:var(--muted);font-style:italic}
 
-        th, td {
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            text-align: left;
-        }
+  /* ---------- Notes ---------- */
+  .note{
+    display:flex;gap:12px;padding:14px 16px;border-radius:12px;margin:10px 0;
+    background:var(--panel);border:1px solid var(--line);
+  }
+  .note .ic{
+    flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:12px;color:#fff;background:var(--accent);
+  }
+  .note.warn{background:#fdf3f2;border-color:#f3d3ce}
+  .note.warn .ic{background:var(--warn)}
+  .note .body{font-size:13.5px}
+  .note .body b{font-weight:600}
 
-        th {
-            background-color: #f1f5f9;
-            color: var(--primary-color);
-            font-weight: 600;
-        }
+  code.inl{
+    font-family:var(--mono);font-size:.9em;background:var(--line-soft);
+    padding:1px 6px;border-radius:5px;color:var(--ink);
+  }
+  .hl-start{color:var(--start);font-weight:600}
+  .hl-cmd{color:var(--cmd);font-weight:600}
+  .hl-pay{color:var(--pay);font-weight:600}
+  .hl-chk{color:var(--chk);font-weight:600}
 
-        tr:nth-child(even) {
-            background-color: #fafbfc;
-        }
+  .example{
+    font-family:var(--mono);font-size:13px;background:#0f1420;color:#e7ecf5;
+    border-radius:12px;padding:16px 18px;margin:12px 0;overflow-x:auto;line-height:1.9;
+  }
+  .example .c{color:#7f8aa3}
+  .example .b{color:#ffb27a}
 
-        code {
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-            background-color: var(--code-bg);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            color: #d63384;
-        }
+  footer{border-top:1px solid var(--line);margin-top:60px;padding:28px 0 50px}
+  footer p{color:var(--muted);font-size:12.5px;margin:0;font-family:var(--mono)}
 
-        .packet-size {
-            display: inline-block;
-            background-color: #e1f5fe;
-            color: #0288d1;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .callout {
-            padding: 15px 20px;
-            border-radius: 0 8px 8px 0;
-            margin: 20px 0;
-        }
-        
-        .callout-warning {
-            background-color: var(--warning-bg);
-            border-left: 4px solid var(--warning-border);
-            color: var(--warning-text);
-        }
-
-        .callout-info {
-            background-color: var(--info-bg);
-            border-left: 4px solid var(--info-border);
-            color: var(--info-text);
-        }
-
-        .callout-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        ul {
-            padding-left: 20px;
-        }
-
-        li {
-            margin-bottom: 8px;
-        }
-
-        /* Pure CSS Language Switch Visibility Engine */
-        html[lang="en"] .lang-zh { display: none !important; }
-        html[lang="zh"] .lang-en { display: none !important; }
-    </style>
+  @media(max-width:860px){
+    main{grid-template-columns:1fr;gap:0}
+    nav.toc{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;scroll-behavior:auto!important}
+  }
+</style>
 </head>
-<body>
+<body class="lang-en">
 
-<div class="container">
-    <div class="header-wrapper">
-        <div>
-            <h1 class="lang-en">USB Serial Communication Protocol Specification for BeeDrive 5.0.1</h1>
-            <h1 class="lang-zh">BeeDrive 5.0.1 USB 串口通信协议规范</h1>
-        </div>
-        <button class="lang-switch-btn" id="langBtn">中文 / English</button>
-    </div>
-    
-    <p class="lang-en">This document outlines the byte-level interface rules required to communicate with the motor controller hardware over a USB serial connection. Once the device is plugged in, it should appear as a serial peripheral. The Baudrate is 115200.</p>
-    <p class="lang-zh">本文档概述了通过 USB 串口连接与电机控制器硬件进行通信所需的字节级接口规则。设备插入后，应显示为串口外设。波特率为 115200。</p>
+<header class="bar">
+  <div class="brand">
+    <span class="eyebrow" data-k="eyebrow">USB Serial Protocol</span>
+    <span class="name" data-k="brand">Motor Controller · Host Interface</span>
+  </div>
+  <button class="lang-toggle" id="langBtn" aria-label="Switch language">
+    <svg class="globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 2.5-2.5 15.5 0 18"/></svg>
+    <span id="langLabel">中文</span>
+  </button>
+</header>
 
-    <h2>
-        <span class="lang-en">1. Frame Architecture</span>
-        <span class="lang-zh">1. 数据帧架构</span>
-    </h2>
-    <p class="lang-en">All inbound and outbound packets follow a strict framing pattern. Multibyte numeric values (such as 16-bit integers and 32-bit floats) use <strong>Little-Endian</strong> format (least significant byte first).</p>
-    <p class="lang-zh">所有输入和输出数据包都遵循严格的帧结构。多字节数值（如 16 位整数和 32 位浮点数）使用 <strong>小端序（Little-Endian）</strong> 格式（低字节在前）。</p>
-
-    <table>
-        <thead>
-            <tr>
-                <th><span class="lang-en">Byte Index</span><span class="lang-zh">字节索引</span></th>
-                <th><span class="lang-en">Field Name</span><span class="lang-zh">字段名称</span></th>
-                <th><span class="lang-en">Data Type</span><span class="lang-zh">数据类型</span></th>
-                <th><span class="lang-en">Value / Description</span><span class="lang-zh">取值 / 描述</span></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><code>0</code></td>
-                <td><strong>Start Byte</strong></td>
-                <td><code>uint8</code></td>
-                <td><span class="lang-en">Always <code>0x02</code></span><span class="lang-zh">固定为 <code>0x02</code></span></td>
-            </tr>
-            <tr>
-                <td><code>1</code></td>
-                <td><strong>Command ID</strong></td>
-                <td><code>uint8</code></td>
-                <td><span class="lang-en">Identifies the packet payload rule (see Registry)</span><span class="lang-zh">识别数据包负载规则（见下表）</span></td>
-            </tr>
-            <tr>
-                <td><code>2</code> to <code>N-3</code></td>
-                <td><strong>Payload</strong></td>
-                <td><em>Variable</em></td>
-                <td><span class="lang-en">Data parameters belonging to the specific Command ID</span><span class="lang-zh">属于特定命令 ID 的数据参数</span></td>
-            </tr>
-            <tr>
-                <td><code>N-2</code></td>
-                <td><strong>Checksum</strong></td>
-                <td><code>uint8</code></td>
-                <td><span class="lang-en">8-bit XOR validation check</span><span class="lang-zh">8 位异或（XOR）验证码</span></td>
-            </tr>
-            <tr>
-                <td><code>N-1</code></td>
-                <td><strong>End Byte</strong></td>
-                <td><code>uint8</code></td>
-                <td><span class="lang-en">Always <code>0x03</code></span><span class="lang-zh">固定为 <code>0x03</code></span></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h3>
-        <span class="lang-en">Checksum Logic</span>
-        <span class="lang-zh">校验和逻辑</span>
-    </h3>
-    <p class="lang-en">The checksum is compiled by running an XOR (<code>^</code>) calculation across all sequential bytes starting immediately after the Start Byte up to, but excluding, the Checksum byte itself.</p>
-    <p class="lang-zh">校验和是通过对从 <strong>起始字节之后</strong> 开始到 <strong>校验和字节之前</strong> 的所有连续字节进行异或（XOR，^）计算得出的。</p>
-
-    <h2>
-        <span class="lang-en">2. Outbound Frame Profiles (Control panel &rarr; Device)</span>
-        <span class="lang-zh">2. 输出数据帧配置（控制面板 &rarr; 设备）</span>
-    </h2>
-    <p class="lang-en">Ensure byte arrays exactly match the targeted sizes. Out-of-bounds parameters will automatically be clamped internally by the motor firmware.</p>
-    <p class="lang-zh">请确保字节数组的大小与指定尺寸完全一致。超出范围的参数将在电机固件内部被自动限制在安全范围内。</p>
-
-    <h3>
-        <span class="lang-en">2.1 Base Resistance (<code>Command ID: 0x00</code>)</span>
-        <span class="lang-zh">2.1 基础阻力 (<code>Command ID: 0x00</code>)</span>
-    </h3>
-    <div class="packet-size">
-        <span class="lang-en">Total Frame Size: 9 Bytes</span>
-        <span class="lang-zh">数据帧总大小: 9 字节</span>
-    </div>
-    <ul>
-        <li>
-            <span class="lang-en"><strong>Bytes 2–3:</strong> <code>int16</code> | Concentric Force limit (in decinewtons, 0.1N). Must be &ge; 0 & &le; 8000.</span>
-            <span class="lang-zh"><strong>Bytes 2–3:</strong> <code>int16</code> | 向心力限制（单位：角牛顿，0.1N）。必须 &ge; 0 且 &le; 8000。</span>
-        </li>
-        <li>
-            <span class="lang-en"><strong>Bytes 4–5:</strong> <code>int16</code> | Eccentric Force limit (in decinewtons, 0.1N). Must be &ge; 0 & &le; 8000.</span>
-            <span class="lang-zh"><strong>Bytes 4–5:</strong> <code>int16</code> | 离心力限制（单位：角牛顿，0.1N）。必须 &ge; 0 且 &le; 8000。</span>
-        </li>
-        <li>
-            <span class="lang-en"><strong>Byte 6:</strong> <code>uint8</code> | SSR Flag. Set to <code>0xFF</code> for True, <code>0x00</code> for False.</span>
-            <span class="lang-zh"><strong>Byte 6:</strong> <code>uint8</code> | SSR 标志。0xFF 表示开启，0x00 表示关闭。</span>
-        </li>
-    </ul>
-
-    <h3>
-        <span class="lang-en">2.2 Spring Simulation (<code>Command ID: 0x01</code>)</span>
-        <span class="lang-zh">2.2 弹簧模拟 (<code>Command ID: 0x01</code>)</span>
-    </h3>
-    <div class="packet-size">
-        <span class="lang-en">Total Frame Size: 8 Bytes</span>
-        <span class="lang-zh">数据帧总大小: 8 字节</span>
-    </div>
-    <ul>
-        <li>
-            <span class="lang-en"><strong>Bytes 2–3:</strong> <code>int16</code> | Target extension spring path length (in mm). Must be &ge; 0. If the length is too small, the feeling will be very bad.</span>
-            <span class="lang-zh"><strong>Bytes 2–3:</strong> <code>int16</code> | 目标弹簧拉伸行程长度（单位：mm）。必须 &ge; 0。如果长度设定太小，力感体验会非常差。</span>
-        </li>
-        <li>
-            <span class="lang-en"><strong>Bytes 4–5:</strong> <code>int16</code> | Max peak force generated at full extension (in 0.1N). Must be &ge; 0 & &le; 8000.</span>
-            <span class="lang-zh"><strong>Bytes 4–5:</strong> <code>int16</code> | 完全拉伸时产生的最大峰值力（单位：0.1N）。必须 &ge; 0 且 &le; 8000。</span>
-        </li>
-    </ul>
-
-    <h3>
-        <span class="lang-en">2.3 Progressive Resistance Band (<code>Command ID: 0x14</code>)</span>
-        <span class="lang-zh">2.3 渐进式阻力带模拟 (<code>Command ID: 0x14</code>)</span>
-    </h3>
-    <div class="packet-size">
-        <span class="lang-en">Total Frame Size: 11 Bytes</span>
-        <span class="lang-zh">数据帧总大小: 11 字节</span>
-    </div>
-    <ul>
-        <li>
-            <span class="lang-en"><strong>Bytes 2–3:</strong> <code>int16</code> | Slack / Rest physical length of the band (in mm). Must be &ge; 0.</span>
-            <span class="lang-zh"><strong>Bytes 2–3:</strong> <code>int16</code> | 阻力带的初始松弛/静止物理长度（单位：mm）。必须 &ge; 0。</span>
-        </li>
-        <li>
-            <span class="lang-en"><strong>Bytes 4–5:</strong> <code>int16</code> | Maximum safe extension length boundary (in mm). Must be &ge; Rest length.</span>
-            <span class="lang-zh"><strong>Bytes 4–5:</strong> <code>int16</code> | 最大安全拉伸长度边界（单位：mm）。必须 &ge; 静止长度。</span>
-        </li>
-        <li>
-            <span class="lang-en"><strong>Bytes 6–7:</strong> <code>int16</code> | Max structural peak force at full extension (in 0.1N). Must be &ge; 0 & &le; 8000.</span>
-            <span class="lang-zh"><strong>Bytes 6–7:</strong> <code>int16</code> | 完全拉伸时的最大结构峰值力（单位：0.1N）。必须 &ge; 0 且 &le; 8000。</span>
-        </li>
-        <li>
-            <span class="lang-en"><strong>Byte 8:</strong> <code>uint8</code> | Curve non-linearity factor coefficient. Valid values: <code>0</code> to <code>4</code>.</span>
-            <span class="lang-zh"><strong>Byte 8:</strong> <code>uint8</code> | 曲线非线性系数。有效取值范围：0 到 4。</span>
-        </li>
-    </ul>
-
-    <h3>
-        <span class="lang-en">2.4 Isokinetic Limit (<code>Command ID: 0x11</code>)</span>
-        <span class="lang-zh">2.4 等速限制 (<code>Command ID: 0x11</code>)</span>
-    </h3>
-    <div class="packet-size">
-        <span class="lang-en">Total Frame Size: 8 Bytes</span>
-        <span class="lang-zh">数据帧总大小: 8 字节</span>
-    </div>
-    <ul>
-        <li>
-            <span class="lang-en"><strong>Bytes 2–3:</strong> <code>int16</code> | Velocity target (in mm/s). Must be &ge; 0. The force will start increasing after this speed, following a slope defined by the parameter "Slope".</span>
-            <span class="lang-zh"><strong>Bytes 2–3:</strong> <code>int16</code> | 目标速度（单位：mm/s）。必须 &ge; 0。超过此速度后阻力将开始增加，增加规律遵循由“Slope”参数定义的斜率。</span>
-        </li>
-        <li>
-            <span class="lang-en"><strong>Bytes 4–5:</strong> <code>int16</code> | Slope parameter (in 0.1N/(m/s)). Must be &ge; 0 & &le; 4000.</span>
-            <span class="lang-zh"><strong>Bytes 4–5:</strong> <code>int16</code> | 斜率参数（单位：0.1N/(m/s)）。必须 &ge; 0 且 &le; 4000。</span>
-        </li>
-    </ul>
-
-    <h3>
-        <span class="lang-en">2.5 Vibrations (<code>Command ID: 0x04</code>)</span>
-        <span class="lang-zh">2.5 震动配置 (<code>Command ID: 0x04</code>)</span>
-    </h3>
-    <div class="packet-size">
-        <span class="lang-en">Total Frame Size: 8 Bytes</span>
-        <span class="lang-zh">数据帧总大小: 8 字节</span>
-    </div>
-    <ul>
-        <li>
-            <span class="lang-en"><strong>Bytes 2–3:</strong> <code>int16</code> | Vibration force amplitude factor (in 0.1N).</span>
-            <span class="lang-zh"><strong>Bytes 2–3:</strong> <code>int16</code> | 震动力幅值参数（单位：0.1N）。</span>
-        </li>
-        <li>
-            <span class="lang-en"><strong>Bytes 4–5:</strong> <code>int16</code> | Targeted mechanical cycling frequency (in Hz).</span>
-            <span class="lang-zh"><strong>Bytes 4–5:</strong> <code>int16</code> | 目标机械循环频率（单位：Hz）。</span>
-        </li>
-    </ul>
-
-    <h3>
-        <span class="lang-en">2.6 System Breakout Inertia (<code>Command ID: 0x15</code>)</span>
-        <span class="lang-zh">2.6 系统启动惯性阻力 (<code>Command ID: 0x15</code>)</span>
-    </h3>
-    <div class="packet-size">
-        <span class="lang-en">Total Frame Size: 6 Bytes</span>
-        <span class="lang-zh">数据帧总大小: 6 字节</span>
-    </div>
-    <ul>
-        <li>
-            <span class="lang-en"><strong>Bytes 2–3:</strong> <code>int16</code> | Starting static breakthrough force resistance limit (in 0.1N). Must be &ge; 0 & &le; 8000.</span>
-            <span class="lang-zh"><strong>Bytes 2–3:</strong> <code>int16</code> | 初始静态突破力阻力限制（单位：0.1N）。必须 &ge; 0 且 &le; 8000。</span>
-        </li>
-    </ul>
-
-    <h3>
-        <span class="lang-en">2.7 Telemetry Stream Request (<code>Command ID: 0x0E</code>)</span>
-        <span class="lang-zh">2.7 遥测数据流请求 (<code>Command ID: 0x0E</code>)</span>
-    </h3>
-    <div class="packet-size">
-        <span class="lang-en">Total Frame Size: 4 Bytes</span>
-        <span class="lang-zh">数据帧总大小: 4 字节</span>
-    </div>
-    <p class="lang-en">Polling payload to command an immediate backplane telemetry message refresh.</p>
-    <p class="lang-zh">用于触发下位机立即回复当前传感器遥测数据的轮询指令包。</p>
-    <p>
-        <strong class="lang-en">Fixed Byte Array String:</strong>
-        <strong class="lang-zh">固定字节数组字符串:</strong>
-        <code>[0x02, 0x0E, 0x0E, 0x03]</code>
-    </p>
-
-    <h2>
-        <span class="lang-en">3. Inbound Telemetry Packet (Device &rarr; Control Panel)</span>
-        <span class="lang-zh">3. 输入遥测数据包（设备 &rarr; Control Panel）</span>
-    </h2>
-    <p class="lang-en">Upon verifying a polling request, the device returns a fixed <strong>21-byte</strong> binary status frame mapping the internal sensor matrices.</p>
-    <p class="lang-zh">验证轮询请求后，设备会立即返回一个固定的 <strong>21字节</strong> 二进制状态帧，映射内部传感器数据矩阵。</p>
-
-    <table>
-        <thead>
-            <tr>
-                <th><span class="lang-en">Byte Index</span><span class="lang-zh">字节索引</span></th>
-                <th><span class="lang-en">Field Name</span><span class="lang-zh">字段名称</span></th>
-                <th><span class="lang-en">Data Type</span><span class="lang-zh">数据类型</span></th>
-                <th><span class="lang-en">Unit / Interpretation Description</span><span class="lang-zh">单位 / 解析说明描述</span></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><code>0</code></td>
-                <td><strong>Start Byte</strong></td>
-                <td><code>uint8</code></td>
-                <td><code>0x02</code></td>
-            </tr>
-            <tr>
-                <td><code>1</code></td>
-                <td><strong>Command ID</strong></td>
-                <td><code>uint8</code></td>
-                <td><code>0x0E</code> <span class="lang-en">(Validation matching)</span><span class="lang-zh">（用于验证匹配）</span></td>
-            </tr>
-            <tr>
-                <td><code>2</code></td>
-                <td><strong>System State</strong></td>
-                <td><code>uint8</code></td>
-                <td><span class="lang-en">Current structural active state machine index status</span><span class="lang-zh">当前系统活动状态机的索引状态</span></td>
-            </tr>
-            <tr>
-                <td><code>3–6</code></td>
-                <td><strong>Real Position</strong></td>
-                <td><code>int32</code></td>
-                <td><span class="lang-en">Current linear rope/draw coordinate extension (in mm)</span><span class="lang-zh">当前拉绳线性拉伸坐标（单位：mm）</span></td>
-            </tr>
-            <tr>
-                <td><code>7–8</code></td>
-                <td><strong>Current Speed</strong></td>
-                <td><code>int16</code></td>
-                <td><span class="lang-en">Real-time travel velocity metrics (in mm/s)</span><span class="lang-zh">实时运行速度指标（单位：mm/s）</span></td>
-            </tr>
-            <tr>
-                <td><code>9–10</code></td>
-                <td><strong>Total Force</strong></td>
-                <td><code>int16</code></td>
-                <td><span class="lang-en">Instantaneous compound force calculations (in 0.1N)</span><span class="lang-zh">瞬时复合出力计算值（单位：0.1N）</span></td>
-            </tr>
-            <tr>
-                <td><code>11–12</code></td>
-                <td><strong>FET Temperature</strong></td>
-                <td><code>int16</code></td>
-                <td><span class="lang-en">Power semiconductor power-stage switch array thermals</span><span class="lang-zh">功率半导体驱动桥开关管阵列温度</span></td>
-            </tr>
-            <tr>
-                <td><code>13–14</code></td>
-                <td><strong>Motor Temperature</strong></td>
-                <td><code>int16</code></td>
-                <td><span class="lang-en">Internal core motor winding inductive thermal sensor</span><span class="lang-zh">电机内部绕组核心感应热敏传感器温度</span></td>
-            </tr>
-            <tr>
-                <td><code>15–16</code></td>
-                <td><strong>Brake Temperature</strong></td>
-                <td><code>int16</code></td>
-                <td><span class="lang-en">Dynamic braking chopper power resistor thermal sensor</span><span class="lang-zh">能耗制动斩波功率电阻热敏传感器温度</span></td>
-            </tr>
-            <tr>
-                <td><code>17–18</code></td>
-                <td><strong>Bus Voltage</strong></td>
-                <td><code>int16</code></td>
-                <td><span class="lang-en">DC Main power rail input distribution line voltage</span><span class="lang-zh">直流主供电母线输入分配电压</span></td>
-            </tr>
-            <tr>
-                <td><code>19</code></td>
-                <td><strong>Checksum</strong></td>
-                <td><code>uint8</code></td>
-                <td><span class="lang-en">Inbound response packet validator token</span><span class="lang-zh">输入响应数据包验证令牌</span></td>
-            </tr>
-            <tr>
-                <td><code>20</code></td>
-                <td><strong>End Byte</strong></td>
-                <td><code>uint8</code></td>
-                <td><code>0x03</code></td>
-            </tr>
-        </tbody>
-    </table>
+<main>
+  <nav class="toc" id="toc"></nav>
+  <div class="content" id="content"></div>
+</main>
 
 <script>
-    const langBtn = document.getElementById('langBtn');
-    const htmlDoc = document.documentElement;
+/* ============================================================
+   All content lives here in both languages.
+   Toggling the language re-renders the page from this model.
+   ============================================================ */
 
-    // Toggle language attribute cleanly on click
-    langBtn.addEventListener('click', () => {
-        if (htmlDoc.getAttribute('lang') === 'en') {
-            htmlDoc.setAttribute('lang', 'zh');
-        } else {
-            htmlDoc.setAttribute('lang', 'en');
-        }
+const T = {
+  en: {
+    dir:'ltr',
+    langLabel:'中文',
+    docTitle:'USB Serial Protocol',
+    eyebrow:'USB Serial Protocol',
+    brand:'Motor Controller · Host Interface',
+    toc:'Contents',
+    hero_kicker:'Integration Guide',
+    hero_title:'USB communication protocol for the host application',
+    hero_lede:'Everything an Android developer needs to talk to the controller board over USB: the byte framing, the checksum, and every command and feedback frame. No firmware knowledge required.',
+    facts:[
+      ['Transport','USB CDC (virtual serial)'],
+      ['Byte order','Little-endian'],
+      ['Frame start','0x02'],
+      ['Frame end','0x03'],
+    ],
+    col:{off:'Offset',field:'Field',type:'Type',size:'Bytes',desc:'Description'},
+    sections:{
+      transport:'Transport & framing',
+      anatomy:'Frame anatomy',
+      checksum:'Checksum',
+      host:'Commands · Host → Device',
+      feedback:'Feedback frames · Device → Host',
+      enums:'States & units',
+      notes:'Integration notes',
+    },
+    transport_p1:'The board enumerates over USB as a <b>CDC virtual serial port</b>. From the Android side, open it through the USB Host / OTG stack with a USB-serial driver, then read and write the raw framed bytes described below.',
+    transport_p2:'Every message — in both directions — is a single frame. Frames have a fixed size per command, so send each command as one write, and read each feedback frame as a fixed-length block.',
+    transport_note:'There is <b>no byte-stuffing or escaping</b>. Because payload bytes can themselves equal 0x02 or 0x03, you cannot split the stream by scanning for the end byte. Instead, parse by the known frame length for each command / feedback type.',
+    anatomy_p:'A frame is a start byte, a command byte, an optional payload, a one-byte checksum, and an end byte. The payload layout depends on the command.',
+    anatomy_roles_start:'Fixed marker <code class="inl">0x02</code>. Always the first byte.',
+    anatomy_roles_cmd:'Identifies the command. Determines the payload layout and the exact frame length.',
+    anatomy_roles_pay:'Zero or more bytes. Integers and floats are little-endian.',
+    anatomy_roles_chk:'XOR of the command byte and all payload bytes (see below).',
+    anatomy_roles_end:'Fixed marker <code class="inl">0x03</code>. Always the last byte.',
+    legend:{start:'START / END',cmd:'COMMAND',pay:'PAYLOAD',chk:'CHECKSUM'},
+    checksum_p:'The checksum is a simple <b>XOR</b> of every byte from the command byte through the last payload byte. The start byte, the checksum byte itself, and the end byte are <b>not</b> included.',
+    checksum_steps:'The device validates the frame before acting: it checks the start byte, the end byte, the exact expected length, and the checksum. If any check fails, the frame is silently dropped — no error is returned.',
+    checksum_ex_title:'Worked example — CMD_ZERO with set0position = 0xFF',
+    checksum_algo:'checksum = CMD ⊕ payload[0] ⊕ payload[1] ⊕ … ⊕ payload[n-1]',
+    host_p:'Commands the host (Android) sends to the device. Each frame must be exactly the size shown; the device rejects frames of any other length. Values are range-limited (clamped) on the device, so out-of-range values are accepted but capped.',
+    feedback_p:'The device sends these only in reply to a request command. Send the matching request frame (no payload), then read back the fixed-length feedback frame.',
+    feedback_trigger:'Sent in response to',
+    enums_p:'The <code class="inl">state</code> field in feedback frames is an enumeration from the device state machine. The names below are stable; confirm the exact numeric values with the firmware team.',
+    states:['IDLE — no active program','RUNNING — a training mode is active','POSITION — position-hold mode','BENCH_TEST — bench / diagnostics mode'],
+    units_title:'Unit conventions',
+    units:[
+      ['Force','deciNewton (dN) — 0.1 N. A value of 100 = 10.0 N.'],
+      ['Distance / position','millimetre (mm).'],
+      ['Speed','millimetre per second (mm/s).'],
+      ['Temperature','degrees Celsius (°C).'],
+      ['Bus voltage','volt (V).'],
+      ['Bus & Iq current','ampere ×100 — the wire value is A × 100 (0.01 A resolution).'],
+    ],
+    notes:[
+      ['warn','Exact length required','The device checks that a command frame is exactly the size listed. A frame that is one byte too long or short is dropped. Build each frame to the precise byte count.'],
+      ['warn','No escaping — frame by length','Payload bytes may equal 0x02 or 0x03. Never reassemble the stream by searching for the end byte; use the known length of each frame type.'],
+      ['i','Little-endian','All int16, int32 and float32 values are little-endian (least-significant byte first). float32 is IEEE-754.'],
+      ['i','Reserved commands','0x02, 0x03 and 0x0F are defined but not handled over USB. Do not send them.'],
+      ['warn','Feedback checksum is partial','On the outgoing FeedBackFrame (in reply to CMD_FEEDBACK, 0x0E) the checksum currently covers only the command byte plus the first 4 payload bytes, not the whole payload. For robust validation of received frames, rely on the start/end markers and the fixed 21-byte length rather than the feedback checksum.'],
+    ],
+    footer:'USB serial protocol reference · shared with the Android application team.',
+  },
+
+  zh: {
+    dir:'ltr',
+    langLabel:'English',
+    docTitle:'USB 串口通信协议',
+    eyebrow:'USB 串口协议',
+    brand:'电机控制器 · 主机接口',
+    toc:'目录',
+    hero_kicker:'集成指南',
+    hero_title:'主机应用的 USB 通信协议',
+    hero_lede:'Android 开发者通过 USB 与控制器板通信所需的全部内容：字节分帧、校验和，以及每一条命令帧和反馈帧。无需了解固件实现。',
+    facts:[
+      ['传输层','USB CDC（虚拟串口）'],
+      ['字节序','小端序'],
+      ['帧起始','0x02'],
+      ['帧结束','0x03'],
+    ],
+    col:{off:'偏移',field:'字段',type:'类型',size:'字节',desc:'说明'},
+    sections:{
+      transport:'传输层与分帧',
+      anatomy:'帧结构',
+      checksum:'校验和',
+      host:'命令 · 主机 → 设备',
+      feedback:'反馈帧 · 设备 → 主机',
+      enums:'状态与单位',
+      notes:'集成注意事项',
+    },
+    transport_p1:'控制器板通过 USB 枚举为一个 <b>CDC 虚拟串口</b>。在 Android 端，通过 USB Host / OTG 协议栈配合 USB 串口驱动打开它，然后按下文所述读写原始的分帧字节。',
+    transport_p2:'每一条消息（双向）都是一个完整的帧。每条命令的帧长度固定，因此发送时把一条命令作为一次写入发出，接收时按固定长度读取每个反馈帧。',
+    transport_note:'协议<b>不做字节填充或转义</b>。由于载荷字节本身也可能等于 0x02 或 0x03，因此不能通过搜索结束字节来切分数据流，应当按每种命令 / 反馈类型的已知帧长度来解析。',
+    anatomy_p:'一个帧由起始字节、命令字节、可选载荷、一个字节的校验和以及结束字节组成。载荷的布局取决于具体命令。',
+    anatomy_roles_start:'固定标记 <code class="inl">0x02</code>，始终是第一个字节。',
+    anatomy_roles_cmd:'标识命令，决定载荷布局与帧的确切长度。',
+    anatomy_roles_pay:'零个或多个字节。整数与浮点数均为小端序。',
+    anatomy_roles_chk:'命令字节与全部载荷字节的异或（见下文）。',
+    anatomy_roles_end:'固定标记 <code class="inl">0x03</code>，始终是最后一个字节。',
+    legend:{start:'起始 / 结束',cmd:'命令',pay:'载荷',chk:'校验和'},
+    checksum_p:'校验和是从命令字节到最后一个载荷字节的所有字节的简单<b>异或（XOR）</b>。<b>不</b>包含起始字节、校验和字节本身以及结束字节。',
+    checksum_steps:'设备在执行前会校验整帧：检查起始字节、结束字节、确切的预期长度以及校验和。任一项不通过，该帧会被静默丢弃，不返回任何错误。',
+    checksum_ex_title:'示例 —— CMD_ZERO，set0position = 0xFF',
+    checksum_algo:'校验和 = CMD ⊕ 载荷[0] ⊕ 载荷[1] ⊕ … ⊕ 载荷[n-1]',
+    host_p:'主机（Android）发送给设备的命令。每个帧必须与所示长度完全一致，否则设备将拒绝。数值会在设备端做限幅处理，因此超范围的值会被接收但被截断到上下限。',
+    feedback_p:'设备仅在收到请求命令后才发送这些帧。先发送对应的请求帧（无载荷），然后读回固定长度的反馈帧。',
+    feedback_trigger:'响应于',
+    enums_p:'反馈帧中的 <code class="inl">state</code> 字段是设备状态机的枚举值。下列名称是稳定的；具体数值请与固件团队确认。',
+    states:['IDLE —— 无运行中的程序','RUNNING —— 某个训练模式运行中','POSITION —— 位置保持模式','BENCH_TEST —— 台架 / 诊断模式'],
+    units_title:'单位约定',
+    units:[
+      ['力','分牛顿（dN）—— 0.1 N。数值 100 = 10.0 N。'],
+      ['距离 / 位置','毫米（mm）。'],
+      ['速度','毫米每秒（mm/s）。'],
+      ['温度','摄氏度（°C）。'],
+      ['母线电压','伏特（V）。'],
+      ['母线电流与 Iq','安培 ×100 —— 传输值为 A × 100（分辨率 0.01 A）。'],
+    ],
+    notes:[
+      ['warn','长度必须精确','设备会检查命令帧是否与所列长度完全一致。多一个或少一个字节都会被丢弃。请严格按精确字节数构建每个帧。'],
+      ['warn','不转义 —— 按长度分帧','载荷字节可能等于 0x02 或 0x03。切勿通过搜索结束字节来重组数据流，应使用每种帧类型的已知长度。'],
+      ['i','小端序','所有 int16、int32、float32 均为小端序（低位字节在前）。float32 采用 IEEE-754。'],
+      ['i','保留命令','0x02、0x03、0x0F 已定义但在 USB 上不作处理，请勿发送。'],
+      ['warn','反馈帧校验和不完整','在发出的 FeedBackFrame（响应 CMD_FEEDBACK，0x0E）中，校验和当前仅覆盖命令字节加前 4 个载荷字节，而非整个载荷。为可靠地校验收到的帧，请依赖起始/结束标记与固定的 21 字节长度，而非反馈帧的校验和。'],
+    ],
+    footer:'USB 串口协议参考 · 提供给 Android 应用团队。',
+  }
+};
+
+/* ---- Byte-role descriptions used in the anatomy section ---- */
+const anatomyRoles = [
+  ['start','START','1', k=>k.anatomy_roles_start],
+  ['cmd','CMD','1', k=>k.anatomy_roles_cmd],
+  ['pay','PAYLOAD','0..N', k=>k.anatomy_roles_pay],
+  ['chk','CHK','1', k=>k.anatomy_roles_chk],
+  ['end','END','1', k=>k.anatomy_roles_end],
+];
+
+/* ============================================================
+   Protocol data — language-neutral, with bilingual descriptions.
+   off = byte offset within the frame (start=0, cmd=1, payload=2..)
+   ============================================================ */
+
+const HOST = [
+  { id:'0x00', name:'CMD_BASE', size:9,
+    desc:{en:'Base training mode — set concentric and eccentric force targets.',
+          zh:'基础训练模式 —— 设置向心与离心力目标。'},
+    fields:[
+      {off:2,name:'concentric',type:'int16',size:2,d:{en:'Concentric force target (dN).',zh:'向心力目标（dN）。'}},
+      {off:4,name:'eccentric',type:'int16',size:2,d:{en:'Eccentric force target (dN).',zh:'离心力目标（dN）。'}},
+      {off:6,name:'SSR',type:'uint8',size:1,d:{en:'SSR flag — 0xFF = on, otherwise off.',zh:'SSR 标志 —— 0xFF 为开，其它为关。'}},
+    ]},
+
+  { id:'0x01', name:'CMD_ELASTIC', size:8,
+    desc:{en:'Elastic mode — length and end force.',zh:'弹性模式 —— 长度与末端力。'},
+    fields:[
+      {off:2,name:'length',type:'int16',size:2,d:{en:'Elastic length (mm).',zh:'弹性长度（mm）。'}},
+      {off:4,name:'endforce',type:'int16',size:2,d:{en:'End force (dN).',zh:'末端力（dN）。'}},
+    ]},
+
+  { id:'0x04', name:'CMD_VIBRATIONS', size:8,
+    desc:{en:'Superimpose a vibration on the force output.',zh:'在力输出上叠加振动。'},
+    fields:[
+      {off:2,name:'amplitude',type:'int16',size:2,d:{en:'Vibration amplitude (dN).',zh:'振动幅值（dN）。'}},
+      {off:4,name:'frequency',type:'int16',size:2,d:{en:'Vibration frequency (Hz).',zh:'振动频率（Hz）。'}},
+    ]},
+
+  { id:'0x0C', name:'CMD_POSITION', size:10,
+    desc:{en:'Position-hold mode — move to and hold a target position.',zh:'位置保持模式 —— 移动到目标位置并保持。'},
+    fields:[
+      {off:2,name:'target',type:'int16',size:2,d:{en:'Target position (mm).',zh:'目标位置（mm）。'}},
+      {off:4,name:'speedlimit',type:'int16',size:2,d:{en:'Speed limit (mm/s).',zh:'速度上限（mm/s）。'}},
+      {off:6,name:'forcelimit',type:'int16',size:2,d:{en:'Force limit (dN).',zh:'力上限（dN）。'}},
+    ]},
+
+  { id:'0x10', name:'CMD_SPEED', size:6,
+    desc:{en:'Set the maximum eccentric speed target.',zh:'设置最大离心速度目标。'},
+    fields:[
+      {off:2,name:'targetspeed',type:'int16',size:2,d:{en:'Target speed (mm/s).',zh:'目标速度（mm/s）。'}},
+    ]},
+
+  { id:'0x11', name:'CMD_ISOCINETIC', size:8,
+    desc:{en:'Isokinetic mode — constant-speed target with a force slope.',zh:'等速模式 —— 恒速目标加力斜率。'},
+    fields:[
+      {off:2,name:'speed',type:'int16',size:2,d:{en:'Speed target (mm/s), signed.',zh:'速度目标（mm/s），有符号。'}},
+      {off:4,name:'slope',type:'int16',size:2,d:{en:'Force slope (dN per mm/s).',zh:'力斜率（dN / (mm/s)）。'}},
+    ]},
+
+  { id:'0x12', name:'CMD_ZERO', size:5,
+    desc:{en:'Set / capture the zero (limit) position.',zh:'设置 / 捕获零点（限位）位置。'},
+    fields:[
+      {off:2,name:'set0position',type:'uint8',size:1,d:{en:'0xFF = capture the current position as zero.',zh:'0xFF = 将当前位置捕获为零点。'}},
+    ]},
+
+  { id:'0x14', name:'CMD_BAND', size:11,
+    desc:{en:'Resistance-band mode — rest length, max length, end force and a coefficient.',
+          zh:'弹力带模式 —— 松弛长度、最大长度、末端力与系数。'},
+    fields:[
+      {off:2,name:'rest',type:'int16',size:2,d:{en:'Rest length (mm).',zh:'松弛长度（mm）。'}},
+      {off:4,name:'maxlength',type:'int16',size:2,d:{en:'Maximum length (mm).',zh:'最大长度（mm）。'}},
+      {off:6,name:'endforce',type:'int16',size:2,d:{en:'End force (dN).',zh:'末端力（dN）。'}},
+      {off:8,name:'coef',type:'uint8',size:1,d:{en:'Curve coefficient (0–4).',zh:'曲线系数（0–4）。'}},
+    ]},
+
+  { id:'0x15', name:'CMD_INERTIA', size:6,
+    desc:{en:'Inertia mode — starting force.',zh:'惯量模式 —— 起始力。'},
+    fields:[
+      {off:2,name:'inertia',type:'int16',size:2,d:{en:'Starting force (dN).',zh:'起始力（dN）。'}},
+    ]},
+
+  { id:'0x0E', name:'CMD_FEEDBACK', size:4, request:true, resp:'FeedBackFrame',
+    desc:{en:'Request a standard feedback frame. No payload — the device replies with FeedBackFrame.',
+          zh:'请求一个标准反馈帧。无载荷 —— 设备回复 FeedBackFrame。'},
+    fields:[]},
+];
+
+const FEEDBACK = [
+  { name:'FeedBackFrame', size:21, trig:'CMD_FEEDBACK (0x0E)',
+    desc:{en:'Standard telemetry snapshot.',zh:'标准遥测快照。'},
+    fields:[
+      {off:2,name:'state',type:'uint8',size:1,d:{en:'Device state (see States).',zh:'设备状态（见状态表）。'}},
+      {off:3,name:'length',type:'int32',size:4,d:{en:'Position (mm).',zh:'位置（mm）。'}},
+      {off:7,name:'speed',type:'int16',size:2,d:{en:'Speed (mm/s).',zh:'速度（mm/s）。'}},
+      {off:9,name:'force',type:'int16',size:2,d:{en:'Total force (dN).',zh:'总力（dN）。'}},
+      {off:11,name:'FETtemperature',type:'int16',size:2,d:{en:'FET temperature (°C).',zh:'FET 温度（°C）。'}},
+      {off:13,name:'MotorTemperature',type:'int16',size:2,d:{en:'Motor temperature (°C).',zh:'电机温度（°C）。'}},
+      {off:15,name:'BRTemperature',type:'int16',size:2,d:{en:'Brake-resistor temperature (°C).',zh:'制动电阻温度（°C）。'}},
+      {off:17,name:'BusVoltage',type:'int16',size:2,d:{en:'Bus voltage (V).',zh:'母线电压（V）。'}},
+    ]},
+];
+
+/* ============================================================
+   Rendering
+   ============================================================ */
+let lang = 'en';
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function stripFor(fields, includePayloadMerged){
+  // Build a colour-coded byte strip for a frame.
+  let segs = `<div class="seg start"><span class="lab">START</span><span class="sz">0x02</span></div>`;
+  segs += `<div class="seg cmd"><span class="lab">CMD</span><span class="sz">1</span></div>`;
+  if(fields.length === 0){
+    // request frame, no payload
+  } else if(includePayloadMerged){
+    segs += `<div class="seg pay"><span class="lab">PAYLOAD</span><span class="sz">0..N B</span></div>`;
+  } else {
+    fields.forEach(f=>{
+      segs += `<div class="seg field"><span class="lab">${esc(f.name)}</span><span class="sz">${f.size} B</span></div>`;
     });
-</script>
+  }
+  segs += `<div class="seg chk"><span class="lab">CHK</span><span class="sz">1</span></div>`;
+  segs += `<div class="seg end"><span class="lab">END</span><span class="sz">0x03</span></div>`;
+  return `<div class="strip">${segs}</div>`;
+}
 
+function fieldTable(fields){
+  const c = T[lang].col;
+  if(fields.length===0) return `<div class="nopayload">— ${lang==='en'?'no payload':'无载荷'} —</div>`;
+  let rows = fields.map(f=>`<tr>
+      <td class="off">${f.off}</td>
+      <td class="mono">${esc(f.name)}</td>
+      <td class="ty">${f.type}</td>
+      <td class="off">${f.size}</td>
+      <td>${esc(f.d[lang])}</td>
+    </tr>`).join('');
+  return `<table>
+    <thead><tr><th>${c.off}</th><th>${c.field}</th><th>${c.type}</th><th>${c.size}</th><th>${c.desc}</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+function cmdCard(cmd, dir){
+  const t = T[lang];
+  const dirBadge = dir==='host'
+    ? `<span class="badge dir-host">${lang==='en'?'Host → Device':'主机 → 设备'}</span>`
+    : `<span class="badge dir-device">${lang==='en'?'Device → Host':'设备 → 主机'}</span>`;
+  const hex = cmd.id ? `<span class="badge hex">${cmd.id}</span>` : '';
+  const sizeBadge = `<span class="badge size">${cmd.size} ${lang==='en'?'bytes':'字节'}</span>`;
+  const resp = cmd.resp ? `<span class="badge dir-device">→ ${cmd.resp}</span>` : '';
+  const trig = cmd.trig ? `<span class="badge hex">${t.feedback_trigger} ${cmd.trig}</span>` : '';
+  return `<div class="cmd-card">
+    <div class="cmd-head">
+      <span class="cname">${esc(cmd.name)}</span>${hex}${sizeBadge}${dirBadge}${resp}${trig}
+    </div>
+    <div class="cmd-desc">${cmd.desc[lang]}</div>
+    ${stripFor(cmd.fields, false)}
+    ${fieldTable(cmd.fields)}
+  </div>`;
+}
+
+function render(){
+  const t = T[lang];
+  document.documentElement.lang = (lang==='zh')?'zh-CN':'en';
+  document.title = t.docTitle;
+  document.body.className = (lang==='zh')?'lang-zh':'lang-en';
+  document.getElementById('langLabel').textContent = t.langLabel;
+  document.querySelector('[data-k="eyebrow"]').textContent = t.eyebrow;
+  document.querySelector('[data-k="brand"]').textContent = t.brand;
+
+  // TOC
+  const S = t.sections;
+  const tocItems = [
+    ['transport',S.transport],['anatomy',S.anatomy],['checksum',S.checksum],
+    ['host',S.host],['feedback',S.feedback],['enums',S.enums],['notes',S.notes],
+  ];
+  document.getElementById('toc').innerHTML =
+    `<div class="toc-label">${t.toc}</div>` +
+    tocItems.map(([id,label])=>`<a href="#${id}">${label}</a>`).join('');
+
+  // Anatomy roles
+  const rolesHtml = anatomyRoles.map(([cls,lab,sz,fn])=>`
+    <tr>
+      <td><span class="hl-${cls==='start'||cls==='end'?'start':cls}">${lab}</span></td>
+      <td class="off">${sz}</td>
+      <td>${fn(t)}</td>
+    </tr>`).join('');
+
+  // Facts
+  const factsHtml = t.facts.map(([a,b])=>`<div class="fact"><b>${a}</b><span>${b}</span></div>`).join('');
+
+  // Host commands
+  const hostHtml = HOST.map(c=>cmdCard(c,'host')).join('');
+  // Feedback frames
+  const fbHtml = FEEDBACK.map(f=>cmdCard(f,'device')).join('');
+
+  // States + units
+  const statesHtml = t.states.map(s=>`<li>${s}</li>`).join('');
+  const unitsHtml = t.units.map(([a,b])=>`<tr><td class="mono">${a}</td><td>${b}</td></tr>`).join('');
+
+  // Notes
+  const notesHtml = t.notes.map(([kind,title,body])=>`
+    <div class="note ${kind==='warn'?'warn':''}">
+      <span class="ic">${kind==='warn'?'!':'i'}</span>
+      <div class="body"><b>${title}</b><br>${body}</div>
+    </div>`).join('');
+
+  document.getElementById('content').innerHTML = `
+    <section class="hero" style="scroll-margin-top:0">
+      <span class="kicker">${t.hero_kicker}</span>
+      <h1>${t.hero_title}</h1>
+      <p class="lede">${t.hero_lede}</p>
+      <div class="facts">${factsHtml}</div>
+    </section>
+
+    <section id="transport">
+      <h2><span class="num">01</span>${S.transport}</h2>
+      <p>${t.transport_p1}</p>
+      <p>${t.transport_p2}</p>
+      <div class="note"><span class="ic">i</span><div class="body">${t.transport_note}</div></div>
+    </section>
+
+    <section id="anatomy">
+      <h2><span class="num">02</span>${S.anatomy}</h2>
+      <p class="sub">${t.anatomy_p}</p>
+      <div class="panel">
+        ${stripFor([{name:'payload',size:'N'}], true)}
+        <div class="legend">
+          <span><i class="dot start"></i>${t.legend.start}</span>
+          <span><i class="dot cmd"></i>${t.legend.cmd}</span>
+          <span><i class="dot pay"></i>${t.legend.pay}</span>
+          <span><i class="dot chk"></i>${t.legend.chk}</span>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>${t.col.field}</th><th>${t.col.size}</th><th>${t.col.desc}</th></tr></thead>
+        <tbody>${rolesHtml}</tbody>
+      </table>
+    </section>
+
+    <section id="checksum">
+      <h2><span class="num">03</span>${S.checksum}</h2>
+      <p>${t.checksum_p}</p>
+      <div class="example"><span class="c"># ${lang==='en'?'algorithm':'算法'}</span><br>${t.checksum_algo}</div>
+      <p>${t.checksum_steps}</p>
+      <h3>${t.checksum_ex_title}</h3>
+      <div class="example">
+<span class="c"># ${lang==='en'?'frame':'帧'}</span>  <span class="hl-start">02</span> <span class="hl-cmd">12</span> <span class="hl-pay">FF</span> <span class="hl-chk">ED</span> <span class="hl-start">03</span><br>
+<span class="c"># ${lang==='en'?'checksum = CMD ⊕ payload':'校验和 = CMD ⊕ 载荷'}</span><br>
+<span class="hl-chk">0xED</span> = <span class="hl-cmd">0x12</span> ⊕ <span class="hl-pay">0xFF</span>
+      </div>
+    </section>
+
+    <section id="host">
+      <h2><span class="num">04</span>${S.host}</h2>
+      <p class="sub">${t.host_p}</p>
+      ${hostHtml}
+    </section>
+
+    <section id="feedback">
+      <h2><span class="num">05</span>${S.feedback}</h2>
+      <p class="sub">${t.feedback_p}</p>
+      ${fbHtml}
+    </section>
+
+    <section id="enums">
+      <h2><span class="num">06</span>${S.enums}</h2>
+      <p class="sub">${t.enums_p}</p>
+      <div class="panel"><ul style="margin:0;padding-left:20px">${statesHtml}</ul></div>
+      <h3>${t.units_title}</h3>
+      <table><tbody>${unitsHtml}</tbody></table>
+    </section>
+
+    <section id="notes">
+      <h2><span class="num">07</span>${S.notes}</h2>
+      ${notesHtml}
+    </section>
+
+    <footer><p>${t.footer}</p></footer>
+  `;
+
+  setupScrollSpy();
+}
+
+/* Scroll spy for the TOC */
+let spyObserver;
+function setupScrollSpy(){
+  if(spyObserver) spyObserver.disconnect();
+  const links = [...document.querySelectorAll('nav.toc a')];
+  const map = {};
+  links.forEach(a=>map[a.getAttribute('href').slice(1)]=a);
+  spyObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        const a = map[e.target.id];
+        if(a) a.classList.add('active');
+      }
+    });
+  },{rootMargin:'-20% 0px -70% 0px'});
+  ['transport','anatomy','checksum','host','feedback','enums','notes']
+    .forEach(id=>{const el=document.getElementById(id); if(el) spyObserver.observe(el);});
+}
+
+document.getElementById('langBtn').addEventListener('click',()=>{
+  lang = (lang==='en')?'zh':'en';
+  render();
+});
+
+render();
+</script>
 </body>
 </html>
